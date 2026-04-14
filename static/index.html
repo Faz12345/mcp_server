@@ -183,6 +183,20 @@
     font-size: 0.6rem;
   }
 
+  .mcp-tool.external {
+    background: rgba(255,184,77,0.1);
+    border-color: rgba(255,184,77,0.3);
+    color: var(--amber);
+  }
+
+  .mcp-section-label {
+    font-size: 0.55rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #3a5a70;
+    padding: 0 4px;
+  }
+
   /* ── Main grid ──────────────────────────────────── */
   main {
     display: grid;
@@ -505,6 +519,12 @@
     display: flex; align-items: center; gap: 4px;
   }
 
+  .tool-chip.external {
+    background: rgba(255,184,77,0.1);
+    border-color: rgba(255,184,77,0.25);
+    color: var(--amber);
+  }
+
   /* ── Audio player ────────────────────────────────── */
   .audio-bar {
     margin: 0 16px 16px;
@@ -756,9 +776,14 @@
   <!-- MCP Tool Bar -->
   <div class="mcp-bar">
     <span class="mcp-label">MCP TOOLS</span>
-    <span class="mcp-tool">search_medical_knowledge</span>
+    <span class="mcp-section-label">LOCAL</span>
+    <span class="mcp-tool">search_local_knowledge</span>
     <span class="mcp-tool">list_documents</span>
     <span class="mcp-tool">get_document_summary</span>
+    <span class="mcp-section-label" style="margin-left:6px">EXTERNAL</span>
+    <span class="mcp-tool external">search_pubmed</span>
+    <span class="mcp-tool external">lookup_drug</span>
+    <span class="mcp-tool external">lookup_condition</span>
     <span style="flex:1"></span>
     <span style="color:#3a5a70">LLM decides when to invoke</span>
   </div>
@@ -899,7 +924,7 @@
         </div>
 
         <div class="disclaimer">
-          Docs are indexed and searched via MCP tools
+          Local docs + PubMed · OpenFDA · RxNorm via MCP
         </div>
       </div>
 
@@ -920,6 +945,20 @@
           <div style="display:flex;justify-content:space-between;font-size:0.65rem;">
             <span style="color:var(--text-dim)">RAG Replaced By</span>
             <span style="color:var(--teal)">MCP</span>
+          </div>
+          <div style="height:1px;background:var(--border);margin:4px 0"></div>
+          <div style="font-size:0.58rem;color:var(--text-dim);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px">Live APIs</div>
+          <div style="display:flex;justify-content:space-between;font-size:0.62rem;">
+            <span style="color:var(--text-dim)">PubMed (NIH)</span>
+            <span id="pubmedStatus" style="color:var(--teal)">●</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.62rem;">
+            <span style="color:var(--text-dim)">OpenFDA</span>
+            <span id="fdaStatus" style="color:var(--teal)">●</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.62rem;">
+            <span style="color:var(--text-dim)">RxNorm (NIH)</span>
+            <span id="rxnormStatus" style="color:var(--teal)">●</span>
           </div>
         </div>
         <div class="disclaimer">
@@ -1136,8 +1175,9 @@ function addMessage(role, text, tools = []) {
   div.className = `msg ${role}`;
 
   const roleLabel = role === 'doctor' ? '⚕ MediBot' : '👤 Patient';
+  const externalTools = new Set(["search_pubmed","lookup_drug","lookup_condition"]);
   const toolsHtml = tools.length
-    ? `<div class="msg-tools">${tools.map(t => `<span class="tool-chip">⚙ ${t}</span>`).join('')}</div>`
+    ? `<div class="msg-tools">${tools.map(t => `<span class="tool-chip ${externalTools.has(t) ? 'external' : ''}">⚙ ${t}</span>`).join('')}</div>`
     : '';
 
   div.innerHTML = `

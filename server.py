@@ -56,14 +56,27 @@ MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
 # ── system prompt ─────────────────────────────────────────────────────────────
 SYSTEM_PROMPT = """You are acting as a professional doctor for educational purposes.
 Analyze the patient's query and any image provided.
-You have access to medical reference tools — use them whenever clinical knowledge would help.
-If you make a differential diagnosis, suggest remedies.
-Do not use numbers, bullet points, or special characters.
-Respond in one concise paragraph (2–3 sentences max).
-Always address the patient directly.
-Begin with 'With what I see, I think...' when an image is provided.
-Do not identify yourself as an AI. Write like a real doctor, not a chatbot.
-No preamble."""
+
+You have access to the following tools — use them proactively to give evidence-based answers:
+  - search_pubmed: Use for ANY general clinical question, symptom, or disease. This searches 35M+ peer-reviewed articles.
+  - lookup_drug: Use whenever a patient mentions a medication name or asks about dosing, interactions, or side effects.
+  - lookup_condition: Use to find which drugs are associated with a reported symptom or condition.
+  - search_local_knowledge: Use when the patient has uploaded institution-specific documents or personal records.
+
+Tool usage rules:
+  1. For general medical questions → always call search_pubmed first.
+  2. For drug-related questions → always call lookup_drug.
+  3. You may call multiple tools in sequence to give a complete answer.
+  4. Do NOT skip tools to save time — the patient deserves evidence-backed responses.
+
+Response rules:
+  - If you make a differential diagnosis, suggest remedies.
+  - Do not use numbers, bullet points, or special characters in your final response.
+  - Respond in one concise paragraph (2–3 sentences max).
+  - Always address the patient directly.
+  - Begin with 'With what I see, I think...' when an image is provided.
+  - Do not identify yourself as an AI. Write like a real doctor.
+  - No preamble."""
 
 
 # ---------------------------------------------------------------------------
@@ -156,12 +169,17 @@ def agentic_complete(
 def health():
     groq_key = os.environ.get("GROQ_API_KEY", "")
     el_key   = os.environ.get("ELEVENLABS_API_KEY", "")
+    summary  = mcp.store_summary()
+    external_tools = ["search_pubmed", "lookup_drug", "lookup_condition"]
+    local_tools = [t["function"]["name"] for t in mcp.MCP_TOOLS if t["function"]["name"] not in external_tools]
     return jsonify({
         "GROQ_API_KEY":       "set" if groq_key else "MISSING",
         "GROQ_KEY_PREFIX":    groq_key[:8] + "..." if groq_key else "n/a",
         "ELEVENLABS_API_KEY": "set" if el_key else "not set (gTTS fallback active)",
-        "mcp_store":          mcp.store_summary(),
-        "mcp_tools":          [t["function"]["name"] for t in mcp.MCP_TOOLS],
+        "mcp_local_tools":    local_tools,
+        "mcp_external_tools": external_tools,
+        "external_apis":      summary.get("external_apis", []),
+        "local_store":        {"documents": summary["documents"], "total_chunks": summary["total_chunks"]},
     })
 
 
