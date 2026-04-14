@@ -1,0 +1,13 @@
+flask
+python-dotenv
+groq
+elevenlabs
+gtts
+SpeechRecognition
+pydub
+pdfplumber
+pypdf
+scikit-learn
+numpy
+uvicorn[standard]
+gunicorn>=21.0.0
