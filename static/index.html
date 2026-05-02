@@ -722,7 +722,342 @@
     box-shadow: 0 0 8px var(--teal);
   }
 
-  /* ── Scrollbar ───────────────────────────────────── */
+  /* ── Emergency panel ─────────────────────────────── */
+  .emergency-panel {
+    border: 1.5px solid rgba(255,77,109,0.35);
+    background: rgba(255,77,109,0.04);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .emergency-panel .panel-head {
+    background: rgba(255,77,109,0.08);
+    border-bottom: 1px solid rgba(255,77,109,0.2);
+  }
+
+  .emergency-panel .panel-title { color: #ff8099; }
+
+  .emergency-header {
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  .emergency-icon {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(255,77,109,0.15);
+    border: 1.5px solid rgba(255,77,109,0.4);
+    display: grid; place-items: center;
+    color: var(--red);
+    font-size: 13px;
+    animation: pulse-red 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-red {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,77,109,0.4); }
+    50%       { box-shadow: 0 0 0 6px rgba(255,77,109,0); }
+  }
+
+  .emergency-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+  .emg-field {
+    display: flex; flex-direction: column; gap: 4px;
+  }
+
+  .emg-label {
+    font-size: 0.58rem; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--text-dim);
+  }
+
+  .emg-input {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+
+  .emg-input:focus { border-color: rgba(255,77,109,0.5); }
+  .emg-input::placeholder { color: var(--text-dim); }
+
+  textarea.emg-input { resize: none; min-height: 72px; }
+
+  .btn-emergency {
+    background: var(--red);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 500;
+    padding: 11px 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: all 0.2s;
+    width: 100%;
+  }
+
+  .btn-emergency:hover { background: #ff1a42; box-shadow: 0 0 20px rgba(255,77,109,0.35); }
+  .btn-emergency:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  /* call status tracker */
+  .call-status-bar {
+    display: none;
+    flex-direction: column; gap: 6px;
+    padding: 10px 12px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.62rem;
+  }
+
+  .call-status-bar.visible { display: flex; }
+
+  .call-status-row {
+    display: flex; justify-content: space-between; align-items: center;
+  }
+
+  .call-status-label { color: var(--text-dim); letter-spacing: 0.08em; text-transform: uppercase; }
+
+  .call-status-val {
+    font-weight: 500; letter-spacing: 0.06em;
+    text-transform: uppercase; font-size: 0.6rem;
+  }
+
+  .call-status-val.queued     { color: var(--amber); }
+  .call-status-val.ringing    { color: var(--amber); animation: blink 1s ease-in-out infinite; }
+  .call-status-val.in-progress{ color: #4dff91; }
+  .call-status-val.completed  { color: var(--teal); }
+  .call-status-val.busy,
+  .call-status-val.failed,
+  .call-status-val.no-answer  { color: var(--red); }
+
+  .call-sid-text {
+    font-size: 0.55rem; color: var(--text-dim);
+    word-break: break-all; opacity: 0.6;
+  }
+
+  .emg-disclaimer {
+    font-size: 0.58rem; color: var(--text-dim);
+    text-align: center; letter-spacing: 0.06em;
+    opacity: 0.6; padding: 0 4px;
+  }
+
+  /* twilio status badge in header */
+  .twilio-badge {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid rgba(255,77,109,0.3);
+    border-radius: 20px;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,77,109,0.7);
+    background: rgba(255,77,109,0.05);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .twilio-badge.ready {
+    border-color: rgba(0,210,180,0.3);
+    color: rgba(0,210,180,0.8);
+    background: rgba(0,210,180,0.04);
+  }
+
+  .twilio-badge:hover { opacity: 0.8; }
+
+  /* ── Webcam modal ────────────────────────────────── */
+  .webcam-modal {
+    display: none;
+    position: fixed; inset: 0; z-index: 500;
+    background: rgba(6,10,15,0.92);
+    backdrop-filter: blur(8px);
+    align-items: center; justify-content: center;
+  }
+  .webcam-modal.open { display: flex; }
+
+  .webcam-box {
+    background: var(--panel);
+    border: 1px solid var(--border2);
+    border-radius: 14px;
+    overflow: hidden;
+    width: min(560px, 95vw);
+    box-shadow: 0 0 60px rgba(0,210,180,0.08);
+    display: flex; flex-direction: column;
+  }
+
+  .webcam-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.2);
+  }
+
+  .webcam-title {
+    font-size: 0.65rem; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--teal);
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .webcam-live-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--red); animation: pulse-red 1s ease-in-out infinite;
+  }
+
+  .webcam-close {
+    background: none; border: none;
+    color: var(--text-dim); font-size: 18px;
+    cursor: pointer; line-height: 1; transition: color 0.2s;
+  }
+  .webcam-close:hover { color: var(--red); }
+
+  .webcam-viewport {
+    position: relative; background: #000;
+    aspect-ratio: 4/3; overflow: hidden;
+  }
+
+  #webcamVideo {
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
+    transform: scaleX(-1);
+  }
+
+  #webcamCanvas { display: none; }
+
+  .webcam-corner {
+    position: absolute; width: 20px; height: 20px;
+    border-color: var(--teal); border-style: solid; opacity: 0.6;
+  }
+  .webcam-corner.tl { top: 12px; left: 12px; border-width: 2px 0 0 2px; }
+  .webcam-corner.tr { top: 12px; right: 12px; border-width: 2px 2px 0 0; }
+  .webcam-corner.bl { bottom: 12px; left: 12px; border-width: 0 0 2px 2px; }
+  .webcam-corner.br { bottom: 12px; right: 12px; border-width: 0 2px 2px 0; }
+
+  .webcam-countdown {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--display); font-size: 6rem; font-weight: 800;
+    color: rgba(255,255,255,0.9);
+    text-shadow: 0 0 40px rgba(0,210,180,0.8);
+    opacity: 0; transition: opacity 0.15s; pointer-events: none;
+  }
+
+  .webcam-flash {
+    position: absolute; inset: 0;
+    background: white; opacity: 0; pointer-events: none;
+  }
+
+  .webcam-controls {
+    display: flex; gap: 10px; padding: 16px;
+    background: rgba(0,0,0,0.2);
+    border-top: 1px solid var(--border);
+    align-items: center; justify-content: center; flex-wrap: wrap;
+  }
+
+  .btn-cam {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: var(--mono); font-size: 0.63rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 9px 18px; border-radius: 6px;
+    cursor: pointer; transition: all 0.2s; border: 1px solid transparent;
+  }
+  .btn-cam-capture { background: var(--teal); color: var(--bg); font-weight: 500; }
+  .btn-cam-capture:hover { background: #00f0ce; box-shadow: 0 0 20px rgba(0,210,180,0.3); }
+  .btn-cam-timer { background: transparent; border-color: var(--border); color: var(--text-dim); }
+  .btn-cam-timer:hover, .btn-cam-timer.active { border-color: var(--amber); color: var(--amber); }
+  .btn-cam-switch { background: transparent; border-color: var(--border); color: var(--text-dim); padding: 9px 12px; }
+  .btn-cam-switch:hover { border-color: var(--teal); color: var(--teal); }
+
+  .webcam-hint {
+    font-size: 0.6rem; color: var(--text-dim);
+    letter-spacing: 0.08em; text-align: center; padding: 0 16px 12px;
+  }
+
+  .webcam-error {
+    display: none; padding: 40px 24px;
+    text-align: center; color: var(--text-dim);
+    font-size: 0.72rem; line-height: 1.8;
+  }
+  .webcam-error.visible { display: block; }
+  .webcam-error-icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.4; }
+
+  .btn-webcam {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: var(--mono); font-size: 0.58rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 4px;
+    cursor: pointer; border: 1px solid var(--border);
+    background: transparent; color: var(--text-dim); transition: all 0.2s;
+  }
+  .btn-webcam:hover { border-color: var(--teal); color: var(--teal); }
+
+  /* ── Severity badge ──────────────────────────────── */
+  .severity-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 10px; border-radius: 12px;
+    font-size: 0.6rem; letter-spacing: 0.1em;
+    text-transform: uppercase; font-weight: 500;
+  }
+  .severity-badge.critical {
+    background: rgba(255,77,109,0.15); border: 1px solid rgba(255,77,109,0.4); color: var(--red);
+  }
+  .severity-badge.moderate {
+    background: rgba(255,184,77,0.12); border: 1px solid rgba(255,184,77,0.35); color: var(--amber);
+  }
+  .severity-badge.mild {
+    background: rgba(0,210,180,0.08); border: 1px solid rgba(0,210,180,0.2); color: var(--teal);
+  }
+
+  /* ── Auto-call alert banner ─────────────────────── */
+  .auto-call-banner {
+    display: none; padding: 14px 16px; margin: 0 16px 16px;
+    border-radius: 8px;
+    background: rgba(255,77,109,0.1);
+    border: 1.5px solid rgba(255,77,109,0.4);
+    animation: fadeUp 0.4s ease forwards;
+    gap: 12px; align-items: flex-start;
+  }
+  .auto-call-banner.visible { display: flex; }
+  .auto-call-icon { font-size: 1.4rem; flex-shrink: 0; line-height: 1; }
+  .auto-call-text { flex: 1; }
+  .auto-call-title {
+    font-size: 0.68rem; font-weight: 600; color: var(--red);
+    letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px;
+  }
+  .auto-call-body { font-size: 0.68rem; color: var(--text-mid); line-height: 1.5; }
+  .auto-call-meta { font-size: 0.6rem; color: var(--text-dim); margin-top: 5px; }
+
+  /* ── Contact fields ─────────────────────────────── */
+  .contact-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    padding: 0 16px 10px;
+  }
+  .contact-field { display: flex; flex-direction: column; gap: 4px; }
+  .contact-label {
+    font-size: 0.57rem; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--text-dim);
+  }
+  .contact-input {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text);
+    font-family: var(--mono); font-size: 0.7rem;
+    padding: 7px 10px; outline: none;
+    transition: border-color 0.2s; width: 100%;
+  }
+  .contact-input:focus { border-color: rgba(0,210,180,0.4); }
+  .contact-input::placeholder { color: var(--text-dim); }
+  .contact-input.has-value { border-color: rgba(0,210,180,0.25); }
+  .contact-hint {
+    font-size: 0.57rem; color: var(--text-dim);
+    padding: 0 16px 8px; opacity: 0.55;
+    display: flex; align-items: center; gap: 5px;
+  }
+
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
@@ -770,6 +1105,12 @@
         </svg>
         <span id="docCountText">0 docs</span>
       </div>
+      <div class="twilio-badge" id="twilioBadge" onclick="scrollToEmergency()">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.73 3.35 2 2 0 0 1 3.7 1.13h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.85a16 16 0 0 0 6.29 6.29l1.81-1.81a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 15.17z"/>
+        </svg>
+        <span id="twilioBadgeText">Twilio</span>
+      </div>
     </div>
   </header>
 
@@ -798,7 +1139,16 @@
       <div class="panel">
         <div class="panel-head">
           <span class="panel-title">Patient Image</span>
-          <span class="panel-badge">Optional</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn-webcam" onclick="openWebcam()">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 7l-7 5 7 5V7z"/>
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+              </svg>
+              Webcam
+            </button>
+            <span class="panel-badge">Optional</span>
+          </div>
         </div>
 
         <div class="drop-zone" id="dropZone" onclick="triggerImageUpload()">
@@ -813,11 +1163,73 @@
               </svg>
             </div>
             <div class="drop-zone-text">Drop image here or click to browse</div>
-            <div class="drop-zone-sub">JPEG · PNG · WEBP</div>
+            <div class="drop-zone-sub">JPEG · PNG · WEBP · or use webcam ↑</div>
           </div>
         </div>
 
         <input type="file" id="imageInput" accept="image/*" style="display:none" onchange="handleImageSelect(event)" />
+      </div>
+
+      <!-- Webcam Modal -->
+      <div class="webcam-modal" id="webcamModal" onclick="handleModalBackdrop(event)">
+        <div class="webcam-box" id="webcamBox">
+
+          <div class="webcam-head">
+            <div class="webcam-title">
+              <div class="webcam-live-dot" id="liveDot"></div>
+              <span id="webcamTitleText">Webcam Capture</span>
+            </div>
+            <button class="webcam-close" onclick="closeWebcam()">✕</button>
+          </div>
+
+          <div class="webcam-viewport" id="webcamViewport">
+            <video id="webcamVideo" autoplay playsinline muted></video>
+            <canvas id="webcamCanvas"></canvas>
+
+            <!-- corner guides -->
+            <div class="webcam-corner tl"></div>
+            <div class="webcam-corner tr"></div>
+            <div class="webcam-corner bl"></div>
+            <div class="webcam-corner br"></div>
+
+            <!-- countdown overlay -->
+            <div class="webcam-countdown" id="webcamCountdown"></div>
+
+            <!-- flash overlay -->
+            <div class="webcam-flash" id="webcamFlash"></div>
+          </div>
+
+          <div class="webcam-error" id="webcamError">
+            <div class="webcam-error-icon">📷</div>
+            <div id="webcamErrorMsg">Camera access denied or unavailable.<br>Please allow camera permissions and try again.</div>
+          </div>
+
+          <div class="webcam-controls" id="webcamControls">
+            <button class="btn-cam btn-cam-capture" onclick="captureWebcam()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <circle cx="12" cy="12" r="4"/>
+              </svg>
+              Capture
+            </button>
+            <button class="btn-cam btn-cam-timer" id="timerBtn" onclick="toggleTimer()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <span id="timerLabel">3s Timer</span>
+            </button>
+            <button class="btn-cam btn-cam-switch" onclick="switchCamera()" title="Switch camera">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 4v6h6"/><path d="M23 20v-6h-6"/>
+                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="webcam-hint">Press <kbd style="background:var(--bg2);border:1px solid var(--border);padding:1px 5px;border-radius:3px;font-size:0.9em">Space</kbd> to capture · <kbd style="background:var(--bg2);border:1px solid var(--border);padding:1px 5px;border-radius:3px;font-size:0.9em">Esc</kbd> to close</div>
+
+        </div>
       </div>
 
       <!-- Query input -->
@@ -825,6 +1237,28 @@
         <div class="panel-head">
           <span class="panel-title">Patient Query</span>
           <span class="panel-badge" id="recordStatus">Ready</span>
+        </div>
+
+        <!-- Emergency contact fields -->
+        <div class="contact-row">
+          <div class="contact-field">
+            <label class="contact-label" for="patientNameField">Your Name</label>
+            <input class="contact-input" id="patientNameField" type="text"
+              placeholder="e.g. Ravi Sharma"
+              oninput="this.classList.toggle('has-value', this.value.length > 0)" />
+          </div>
+          <div class="contact-field">
+            <label class="contact-label" for="emergencyContactField">
+              📞 Emergency Contact
+            </label>
+            <input class="contact-input" id="emergencyContactField" type="tel"
+              placeholder="+91XXXXXXXXXX"
+              oninput="this.classList.toggle('has-value', this.value.length > 0)" />
+          </div>
+        </div>
+        <div class="contact-hint">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          If a critical condition is detected, MediBot will automatically call this number via Twilio.
         </div>
 
         <div class="query-section">
@@ -890,6 +1324,16 @@
             <div class="wave-bar"></div>
           </div>
           <audio id="audioPlayer"></audio>
+        </div>
+
+        <!-- Auto-call alert banner -->
+        <div class="auto-call-banner" id="autoCallBanner">
+          <div class="auto-call-icon">🚨</div>
+          <div class="auto-call-text">
+            <div class="auto-call-title">Critical Condition Detected — Emergency Call Placed</div>
+            <div class="auto-call-body" id="autoCallBody">MediBot has automatically called your emergency contact.</div>
+            <div class="auto-call-meta" id="autoCallMeta"></div>
+          </div>
         </div>
       </div>
 
@@ -966,7 +1410,61 @@
         </div>
       </div>
 
-    </div>
+      <!-- Emergency calling panel -->
+      <div class="panel emergency-panel" id="emergencyPanel">
+        <div class="panel-head">
+          <div class="emergency-header">
+            <div class="emergency-icon">📞</div>
+            <span class="panel-title">Emergency Call</span>
+          </div>
+          <span class="panel-badge" style="border-color:rgba(255,77,109,0.3);color:#ff8099;background:rgba(255,77,109,0.1)" id="emergencyReadyBadge">Checking...</span>
+        </div>
+
+        <div class="emergency-body">
+
+          <div class="emg-field">
+            <label class="emg-label" for="patientName">Patient Name</label>
+            <input class="emg-input" id="patientName" type="text" placeholder="e.g. Ravi Sharma" />
+          </div>
+
+          <div class="emg-field">
+            <label class="emg-label" for="overrideTo">Call Number (optional override)</label>
+            <input class="emg-input" id="overrideTo" type="tel" placeholder="+91XXXXXXXXXX  (leave blank for default)" />
+          </div>
+
+          <div class="emg-field">
+            <label class="emg-label" for="emergencySummary">Situation Summary</label>
+            <textarea class="emg-input" id="emergencySummary" placeholder="Describe the emergency or use the last doctor response…"></textarea>
+          </div>
+
+          <button class="btn-emergency" id="emergencyBtn" onclick="triggerEmergency()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.73 3.35 2 2 0 0 1 3.7 1.13h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.85a16 16 0 0 0 6.29 6.29l1.81-1.81a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 15.17z"/>
+            </svg>
+            Call Emergency Contact
+          </button>
+
+          <!-- Live call status tracker -->
+          <div class="call-status-bar" id="callStatusBar">
+            <div class="call-status-row">
+              <span class="call-status-label">Call status</span>
+              <span class="call-status-val" id="callStatusVal">—</span>
+            </div>
+            <div class="call-status-row">
+              <span class="call-status-label">SMS</span>
+              <span class="call-status-val" id="smsStatusVal">—</span>
+            </div>
+            <div class="call-sid-text" id="callSidText"></div>
+          </div>
+
+          <div class="emg-disclaimer">
+            Calls are placed via Twilio to your configured emergency contact. This is not a substitute for calling 112 / 911 directly.
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- /.sidebar -->
   </main>
 </div>
 
@@ -986,6 +1484,7 @@ let chatEmpty = true;
 document.addEventListener('DOMContentLoaded', () => {
   loadDocs();
   setupDragDrop();
+  checkTwilioConfig();
 });
 
 /* ── Toast ───────────────────────────────────────── */
@@ -1080,9 +1579,11 @@ function setRecording(val) {
 
 /* ── Analyze ─────────────────────────────────────── */
 async function analyze() {
-  const query = document.getElementById('queryText').value.trim();
-  const imageInput = document.getElementById('imageInput');
-  const imageFile = imageInput.files[0];
+  const query            = document.getElementById('queryText').value.trim();
+  const imageInput       = document.getElementById('imageInput');
+  const imageFile        = imageInput.files[0];
+  const emergencyContact = document.getElementById('emergencyContactField').value.trim();
+  const patientName      = document.getElementById('patientNameField').value.trim();
 
   if (!query && !imageFile && !recordedBlob) {
     toast('Please enter a query, upload an image, or record audio', true);
@@ -1092,6 +1593,9 @@ async function analyze() {
   const btn = document.getElementById('analyzeBtn');
   btn.disabled = true;
   btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Analyzing…';
+
+  // Hide previous auto-call banner
+  document.getElementById('autoCallBanner').classList.remove('visible');
 
   // Add patient message
   if (chatEmpty) {
@@ -1110,12 +1614,14 @@ async function analyze() {
 
   // Build form data
   const fd = new FormData();
-  if (query) fd.append('text', query);
-  if (imageFile) fd.append('image', imageFile);
-  if (recordedBlob) fd.append('audio', recordedBlob, 'audio.webm');
+  if (query)            fd.append('text', query);
+  if (imageFile)        fd.append('image', imageFile);
+  if (recordedBlob)     fd.append('audio', recordedBlob, 'audio.webm');
+  if (emergencyContact) fd.append('emergency_contact', emergencyContact);
+  if (patientName)      fd.append('patient_name', patientName);
 
   try {
-    const res = await fetch('/api/analyze', { method: 'POST', body: fd });
+    const res  = await fetch('/api/analyze', { method: 'POST', body: fd });
     const data = await res.json();
 
     thinking.classList.remove('visible');
@@ -1123,7 +1629,29 @@ async function analyze() {
     if (data.error) {
       toast(data.error, true);
     } else {
-      addMessage('doctor', data.doctor_response, data.mcp_tools_used || []);
+      // Severity
+      const severity = data.severity || 'mild';
+      addMessage('doctor', data.doctor_response, data.mcp_tools_used || [], severity, data.severity_reason || '');
+
+      // Update response badge with severity
+      const badge = document.getElementById('responseBadge');
+      badge.innerHTML = `<span class="severity-badge ${severity}">${severityIcon(severity)} ${severity}</span>`;
+
+      // Auto-call banner
+      if (data.auto_called) {
+        const contact = emergencyContact || 'your emergency contact';
+        document.getElementById('autoCallBody').textContent =
+          `MediBot automatically called ${contact} because a critical condition was detected: ${data.severity_reason}`;
+        const er = data.emergency_result || {};
+        document.getElementById('autoCallMeta').textContent =
+          `Call SID: ${er.call_sid || 'n/a'} · SMS: ${er.sms_status || 'n/a'}`;
+        document.getElementById('autoCallBanner').classList.add('visible');
+        toast('🚨 Critical condition — emergency call placed automatically', true);
+        // Start polling call status
+        if (er.call_sid) startCallPolling(er.call_sid);
+      } else if (severity === 'critical' && !emergencyContact) {
+        toast('⚠️ Critical condition detected — add an emergency contact number to enable auto-calling', true);
+      }
 
       if (data.audio_url) {
         document.getElementById('audioPlayer').src = data.audio_url;
@@ -1133,14 +1661,13 @@ async function analyze() {
       sessionQueries++;
       sessionTools += (data.tool_call_count || 0);
       document.getElementById('statQueries').textContent = sessionQueries;
-      document.getElementById('statTools').textContent = sessionTools;
-      document.getElementById('responseBadge').textContent =
-        data.tool_call_count > 0 ? `${data.tool_call_count} tool call${data.tool_call_count > 1 ? 's' : ''}` : 'No tools used';
+      document.getElementById('statTools').textContent   = sessionTools;
 
       // Clear inputs
       document.getElementById('queryText').value = '';
       recordedBlob = null;
       document.getElementById('recordStatus').textContent = 'Ready';
+      _lastDoctorResponse = data.doctor_response || '';
     }
   } catch (err) {
     thinking.classList.remove('visible');
@@ -1149,6 +1676,10 @@ async function analyze() {
 
   btn.disabled = false;
   btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> Analyze';
+}
+
+function severityIcon(s) {
+  return s === 'critical' ? '🔴' : s === 'moderate' ? '🟡' : '🟢';
 }
 
 function animateThinking() {
@@ -1169,7 +1700,7 @@ function animateThinking() {
   }, 1400);
 }
 
-function addMessage(role, text, tools = []) {
+function addMessage(role, text, tools = [], severity = '', severityReason = '') {
   const log = document.getElementById('chatLog');
   const div = document.createElement('div');
   div.className = `msg ${role}`;
@@ -1180,10 +1711,15 @@ function addMessage(role, text, tools = []) {
     ? `<div class="msg-tools">${tools.map(t => `<span class="tool-chip ${externalTools.has(t) ? 'external' : ''}">⚙ ${t}</span>`).join('')}</div>`
     : '';
 
+  const severityHtml = (role === 'doctor' && severity)
+    ? `<div style="margin-top:6px"><span class="severity-badge ${severity}" title="${escHtml(severityReason)}">${severityIcon(severity)} ${severity}</span></div>`
+    : '';
+
   div.innerHTML = `
     <div class="msg-role ${role}">${roleLabel}</div>
     <div class="msg-body">${escHtml(text)}</div>
     ${toolsHtml}
+    ${severityHtml}
   `;
   log.appendChild(div);
   log.scrollTop = log.scrollHeight;
@@ -1268,6 +1804,322 @@ async function uploadDoc(e) {
 
   e.target.value = '';
 }
+
+/* ── Twilio / Emergency ──────────────────────────── */
+let _lastDoctorResponse = "";
+let _callPollInterval   = null;
+let _currentCallSid     = null;
+
+async function checkTwilioConfig() {
+  try {
+    const res  = await fetch('/api/emergency/config');
+    const data = await res.json();
+    const badge     = document.getElementById('twilioBadge');
+    const badgeText = document.getElementById('twilioBadgeText');
+    const readyBadge = document.getElementById('emergencyReadyBadge');
+
+    if (data.ready) {
+      badge.classList.add('ready');
+      badgeText.textContent = 'Twilio Ready';
+      readyBadge.textContent = '● Ready';
+      readyBadge.style.color = 'var(--teal)';
+    } else {
+      badgeText.textContent = 'Twilio Not Set';
+      readyBadge.textContent = '⚠ Not Configured';
+      readyBadge.style.color = 'var(--amber)';
+    }
+
+    // Pre-fill number hint if configured
+    if (data.EMERGENCY_TO_NUMBER && data.EMERGENCY_TO_NUMBER !== 'MISSING') {
+      const ph = document.getElementById('overrideTo');
+      ph.placeholder = `Default: ${data.EMERGENCY_TO_NUMBER}`;
+    }
+  } catch (e) { /* server might not be running in preview */ }
+}
+
+function scrollToEmergency() {
+  document.getElementById('emergencyPanel').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Auto-fill summary from last doctor response when textarea is focused and empty
+document.addEventListener('DOMContentLoaded', () => {
+  const ta = document.getElementById('emergencySummary');
+  if (ta) {
+    ta.addEventListener('focus', () => {
+      if (!ta.value && _lastDoctorResponse) {
+        ta.value = _lastDoctorResponse.slice(0, 400);
+      }
+    });
+  }
+});
+
+async function triggerEmergency() {
+  const btn         = document.getElementById('emergencyBtn');
+  const summary     = document.getElementById('emergencySummary').value.trim()
+                      || _lastDoctorResponse.slice(0, 400)
+                      || "The patient is experiencing a medical emergency and needs immediate assistance.";
+  const patientName = document.getElementById('patientName').value.trim() || "the patient";
+  const toNumber    = document.getElementById('overrideTo').value.trim() || undefined;
+
+  // Confirm before calling
+  if (!confirm(`⚠️ This will place a real phone call and send an SMS to your emergency contact.\n\nPatient: ${patientName}\nSummary: ${summary.slice(0,120)}...\n\nProceed?`)) return;
+
+  btn.disabled = true;
+  btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Calling…`;
+
+  const statusBar = document.getElementById('callStatusBar');
+  statusBar.classList.add('visible');
+  document.getElementById('callStatusVal').textContent = 'Initiating…';
+  document.getElementById('callStatusVal').className   = 'call-status-val queued';
+  document.getElementById('smsStatusVal').textContent  = '—';
+  document.getElementById('callSidText').textContent   = '';
+
+  try {
+    const body = { summary, patient_name: patientName };
+    if (toNumber) body.to_number = toNumber;
+
+    const res  = await fetch('/api/emergency/trigger', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+
+    if (data.errors && data.errors.length) {
+      toast('Emergency call error: ' + data.errors[0], true);
+    }
+
+    if (data.call_sid) {
+      _currentCallSid = data.call_sid;
+      document.getElementById('callSidText').textContent = `SID: ${data.call_sid}`;
+      updateCallStatusUI(data.call_status || 'queued');
+      startCallPolling(data.call_sid);
+      toast('📞 Emergency call placed successfully');
+    } else {
+      updateCallStatusUI('failed');
+      toast('Call could not be placed — check Twilio config', true);
+    }
+
+    if (data.sms_sid) {
+      document.getElementById('smsStatusVal').textContent = data.sms_status || 'sent';
+      document.getElementById('smsStatusVal').style.color = 'var(--teal)';
+    } else {
+      document.getElementById('smsStatusVal').textContent = 'failed';
+      document.getElementById('smsStatusVal').style.color = 'var(--red)';
+    }
+
+  } catch (err) {
+    toast('Network error — is the server running?', true);
+    updateCallStatusUI('failed');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.73 3.35 2 2 0 0 1 3.7 1.13h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.85a16 16 0 0 0 6.29 6.29l1.81-1.81a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 15.17z"/></svg> Call Emergency Contact`;
+}
+
+function updateCallStatusUI(status) {
+  const el = document.getElementById('callStatusVal');
+  el.textContent = status.replace(/-/g, ' ').toUpperCase();
+  el.className   = 'call-status-val ' + status.replace(/-/g, '-');
+}
+
+function startCallPolling(sid) {
+  if (_callPollInterval) clearInterval(_callPollInterval);
+  const TERMINAL = new Set(['completed', 'busy', 'failed', 'no-answer', 'canceled']);
+
+  _callPollInterval = setInterval(async () => {
+    try {
+      const res  = await fetch(`/api/emergency/call-status/${sid}`);
+      const data = await res.json();
+      if (data.status) {
+        updateCallStatusUI(data.status);
+        if (TERMINAL.has(data.status)) {
+          clearInterval(_callPollInterval);
+          _callPollInterval = null;
+        }
+      }
+    } catch (e) {
+      clearInterval(_callPollInterval);
+    }
+  }, 3000); // poll every 3 s
+}
+
+/* ── Webcam ───────────────────────────────────────── */
+let webcamStream      = null;
+let webcamFacingMode  = 'user';   // 'user' = front, 'environment' = rear
+let timerEnabled      = false;
+let timerSeconds      = 3;
+let countdownTimer    = null;
+
+async function openWebcam() {
+  const modal = document.getElementById('webcamModal');
+  const err   = document.getElementById('webcamError');
+  const vp    = document.getElementById('webcamViewport');
+  const ctrl  = document.getElementById('webcamControls');
+
+  modal.classList.add('open');
+  err.classList.remove('visible');
+  vp.style.display  = 'block';
+  ctrl.style.display = 'flex';
+
+  await startCamera();
+}
+
+async function startCamera() {
+  // Stop any existing stream
+  if (webcamStream) {
+    webcamStream.getTracks().forEach(t => t.stop());
+    webcamStream = null;
+  }
+
+  const video = document.getElementById('webcamVideo');
+  const err   = document.getElementById('webcamError');
+  const vp    = document.getElementById('webcamViewport');
+
+  try {
+    const constraints = {
+      video: {
+        facingMode: webcamFacingMode,
+        width:  { ideal: 1280 },
+        height: { ideal: 960 },
+      },
+      audio: false,
+    };
+    webcamStream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = webcamStream;
+    await video.play();
+    err.classList.remove('visible');
+    vp.style.display = 'block';
+    document.getElementById('liveDot').style.display = 'block';
+    document.getElementById('webcamTitleText').textContent = 'Webcam — Live';
+  } catch (e) {
+    webcamStream = null;
+    vp.style.display = 'none';
+    document.getElementById('webcamControls').style.display = 'none';
+    document.getElementById('liveDot').style.display = 'none';
+    document.getElementById('webcamTitleText').textContent = 'Webcam';
+    document.getElementById('webcamErrorMsg').textContent =
+      e.name === 'NotAllowedError'
+        ? 'Camera permission denied.\nPlease allow camera access in your browser settings and try again.'
+        : e.name === 'NotFoundError'
+        ? 'No camera detected on this device.'
+        : `Camera error: ${e.message}`;
+    err.classList.add('visible');
+  }
+}
+
+function closeWebcam() {
+  clearCountdown();
+  if (webcamStream) {
+    webcamStream.getTracks().forEach(t => t.stop());
+    webcamStream = null;
+  }
+  document.getElementById('webcamModal').classList.remove('open');
+}
+
+function handleModalBackdrop(e) {
+  if (e.target === document.getElementById('webcamModal')) closeWebcam();
+}
+
+async function switchCamera() {
+  webcamFacingMode = webcamFacingMode === 'user' ? 'environment' : 'user';
+  await startCamera();
+}
+
+function toggleTimer() {
+  timerEnabled = !timerEnabled;
+  const btn = document.getElementById('timerBtn');
+  const lbl = document.getElementById('timerLabel');
+  btn.classList.toggle('active', timerEnabled);
+  lbl.textContent = timerEnabled ? `Timer ON (${timerSeconds}s)` : `${timerSeconds}s Timer`;
+}
+
+function clearCountdown() {
+  if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+  const cd = document.getElementById('webcamCountdown');
+  cd.style.opacity = '0';
+  cd.textContent = '';
+}
+
+function captureWebcam() {
+  if (!webcamStream) return;
+
+  if (timerEnabled) {
+    let remaining = timerSeconds;
+    const cd = document.getElementById('webcamCountdown');
+    cd.textContent  = remaining;
+    cd.style.opacity = '1';
+
+    countdownTimer = setInterval(() => {
+      remaining--;
+      if (remaining <= 0) {
+        clearCountdown();
+        doCapture();
+      } else {
+        cd.textContent = remaining;
+      }
+    }, 1000);
+  } else {
+    doCapture();
+  }
+}
+
+function doCapture() {
+  const video  = document.getElementById('webcamVideo');
+  const canvas = document.getElementById('webcamCanvas');
+
+  // Match canvas size to video dimensions
+  canvas.width  = video.videoWidth  || 1280;
+  canvas.height = video.videoHeight || 960;
+
+  const ctx = canvas.getContext('2d');
+  // Un-mirror for the captured image (mirror only for display)
+  ctx.save();
+  ctx.scale(-1, 1);
+  ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+  ctx.restore();
+
+  // Flash effect
+  const flash = document.getElementById('webcamFlash');
+  flash.style.transition = 'none';
+  flash.style.opacity = '1';
+  requestAnimationFrame(() => {
+    flash.style.transition = 'opacity 0.4s ease';
+    flash.style.opacity    = '0';
+  });
+
+  // Convert canvas → Blob → File, then show preview
+  canvas.toBlob(blob => {
+    const file = new File([blob], `webcam-${Date.now()}.jpg`, { type: 'image/jpeg' });
+
+    // Inject into the imageInput file input
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    document.getElementById('imageInput').files = dt.files;
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img  = document.getElementById('preview');
+      const zone = document.getElementById('dropZone');
+      img.src = e.target.result;
+      img.classList.add('visible');
+      zone.classList.add('has-image');
+    };
+    reader.readAsDataURL(file);
+
+    toast('📷 Photo captured — ready to analyze');
+    closeWebcam();
+  }, 'image/jpeg', 0.92);
+}
+
+// Keyboard shortcuts inside modal
+document.addEventListener('keydown', e => {
+  const modal = document.getElementById('webcamModal');
+  if (!modal.classList.contains('open')) return;
+  if (e.key === 'Escape') { e.preventDefault(); closeWebcam(); }
+  if (e.key === ' ')      { e.preventDefault(); captureWebcam(); }
+});
 
 /* ── Keyboard shortcut ───────────────────────────── */
 document.addEventListener('keydown', (e) => {

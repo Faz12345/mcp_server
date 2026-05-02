@@ -1,21 +1,19 @@
 """
-server.py — Flask backend for MediBot (MCP edition).
+server.py — Flask backend for MediBot (MCP + Twilio Emergency edition).
 
 Endpoints:
-  GET  /                  → serve index.html
-  GET  /api/health        → key + store status
-  GET  /api/docs          → list loaded documents & chunk count
-  POST /api/upload-doc    → upload a new PDF or TXT into the MCP store
-  POST /api/analyze       → multipart: audio (optional) + image (optional) → JSON response
-  GET  /api/audio/<name>  → serve generated audio files
+  GET  /                              → serve index.html
+  GET  /api/health                    → key + store + Twilio status
+  GET  /api/docs                      → list loaded documents & chunk count
+  POST /api/upload-doc                → upload PDF/TXT into MCP store
+  POST /api/analyze                   → audio + image + text → JSON response
+  GET  /api/audio/<name>              → serve generated TTS audio
 
-Architecture change from RAG edition:
-  • rag_engine.py  →  mcp_server.py
-  • Context is NOT injected upfront. Instead, the LLM receives MCP_TOOLS and
-    decides autonomously whether/when to call search_medical_knowledge,
-    list_documents, or get_document_summary.
-  • The agentic_complete() function runs the full tool-calling loop until the
-    model stops issuing tool calls and returns a final text response.
+  POST /api/emergency/trigger         → place Twilio call + SMS to emergency contact
+  GET  /api/emergency/twiml           → TwiML webhook (Twilio fetches this during the call)
+  POST /api/emergency/status          → Twilio call-status callback (logs progress)
+  GET  /api/emergency/call-status/<sid> → poll live call status from frontend
+  GET  /api/emergency/config          → check Twilio env var status
 """
 
 from __future__ import annotations
@@ -33,6 +31,7 @@ load_dotenv()
 
 # ── local modules ────────────────────────────────────────────────────────────
 import mcp_server as mcp
+import emergency_call as ec
 from brain_of_the_doctor import encode_image
 from voice_of_the_patient import transcribe_with_groq
 from voice_of_the_doctor import text_to_speech_with_gtts, text_to_speech_with_elevenlabs
@@ -77,6 +76,59 @@ Response rules:
   - Begin with 'With what I see, I think...' when an image is provided.
   - Do not identify yourself as an AI. Write like a real doctor.
   - No preamble."""
+
+SEVERITY_PROMPT = """You are a medical triage classifier. Given a patient's symptom description and/or a doctor's response, assess the severity of the condition.
+
+Respond ONLY with a valid JSON object — no explanation, no markdown, no preamble:
+{
+  "severity": "critical" | "moderate" | "mild",
+  "reason": "one sentence reason",
+  "keywords": ["list", "of", "key", "symptoms"]
+}
+
+Rules:
+- "critical": life-threatening conditions requiring immediate emergency response.
+  Examples: heart attack, stroke, severe chest pain, difficulty breathing, unconsciousness,
+  severe allergic reaction (anaphylaxis), uncontrolled bleeding, poisoning, overdose,
+  seizure, suspected spinal injury, severe burns, sepsis signs.
+- "moderate": serious conditions needing urgent medical attention within hours but not immediately life-threatening.
+  Examples: high fever, moderate pain, suspected fracture, persistent vomiting, infected wounds.
+- "mild": non-urgent conditions manageable with home care or a routine doctor visit.
+  Examples: common cold, minor cuts, mild headache, minor rash, low-grade fever."""
+
+
+def classify_severity(user_query: str, doctor_response: str) -> dict:
+    """
+    Use LLM to classify whether the condition is critical/moderate/mild.
+    Returns dict with keys: severity, reason, keywords
+    """
+    if not GROQ_API_KEY:
+        return {"severity": "mild", "reason": "Could not classify — no API key.", "keywords": []}
+
+    client = Groq(api_key=GROQ_API_KEY)
+    combined = f"Patient query: {user_query}\n\nDoctor assessment: {doctor_response}"
+
+    try:
+        resp = client.chat.completions.create(
+            model=MODEL,
+            messages=[
+                {"role": "system", "content": SEVERITY_PROMPT},
+                {"role": "user",   "content": combined},
+            ],
+            max_tokens=200,
+            temperature=0.1,   # low temperature for consistent classification
+        )
+        raw = resp.choices[0].message.content.strip()
+        # Strip any accidental markdown fences
+        raw = raw.replace("```json", "").replace("```", "").strip()
+        result = json.loads(raw)
+        # Validate shape
+        if result.get("severity") not in ("critical", "moderate", "mild"):
+            result["severity"] = "mild"
+        return result
+    except Exception as e:
+        logger.warning(f"Severity classification failed: {e}")
+        return {"severity": "mild", "reason": "Classification error.", "keywords": []}
 
 
 # ---------------------------------------------------------------------------
@@ -180,6 +232,7 @@ def health():
         "mcp_external_tools": external_tools,
         "external_apis":      summary.get("external_apis", []),
         "local_store":        {"documents": summary["documents"], "total_chunks": summary["total_chunks"]},
+        "twilio":             ec.config_status(),
     })
 
 
@@ -231,8 +284,10 @@ def analyze():
         finally:
             audio_path.unlink(missing_ok=True)
 
-    typed_text = request.form.get("text", "").strip()
-    user_query = (speech_text + " " + typed_text).strip() or "Please analyze my image."
+    typed_text        = request.form.get("text", "").strip()
+    emergency_contact = request.form.get("emergency_contact", "").strip()  # ← NEW
+    patient_name      = request.form.get("patient_name", "the patient").strip()
+    user_query        = (speech_text + " " + typed_text).strip() or "Please analyze my image."
 
     # 2. Build user content (text + optional image for multimodal)
     user_content: list[dict] = [{"type": "text", "text": user_query}]
@@ -261,7 +316,29 @@ def analyze():
         if image_path and image_path.exists():
             image_path.unlink(missing_ok=True)
 
-    # 4. TTS
+    # 4. Severity classification ← NEW
+    severity_result = classify_severity(user_query, doctor_response)
+    severity        = severity_result.get("severity", "mild")
+    logger.info(f"Severity: {severity} — {severity_result.get('reason', '')}")
+
+    # 5. Auto emergency call if CRITICAL and contact number provided ← NEW
+    emergency_result = None
+    auto_called      = False
+    if severity == "critical" and emergency_contact:
+        logger.warning(f"CRITICAL condition detected — auto-calling {emergency_contact}")
+        summary_for_call = (
+            f"Patient ({patient_name}) reported: {user_query[:200]}. "
+            f"Doctor assessment: {doctor_response[:250]}."
+        )
+        emergency_result = ec.trigger_emergency(
+            summary      = summary_for_call,
+            patient_name = patient_name,
+            to_number    = emergency_contact,
+        )
+        auto_called = emergency_result.get("success", False)
+        logger.info(f"Auto-call result: {emergency_result}")
+
+    # 6. TTS
     audio_name = f"response_{uuid.uuid4().hex}.mp3"
     audio_out  = AUDIO_DIR / audio_name
     audio_url  = None
@@ -281,17 +358,90 @@ def analyze():
         logger.warning(f"TTS failed: {e}")
 
     return jsonify({
-        "speech_text":     speech_text,
-        "doctor_response": doctor_response,
-        "audio_url":       audio_url,
-        "mcp_tools_used":  [t["tool"] for t in tool_log],
-        "tool_call_count": len(tool_log),
+        "speech_text":      speech_text,
+        "doctor_response":  doctor_response,
+        "audio_url":        audio_url,
+        "mcp_tools_used":   [t["tool"] for t in tool_log],
+        "tool_call_count":  len(tool_log),
+        # severity fields ↓
+        "severity":         severity,
+        "severity_reason":  severity_result.get("reason", ""),
+        "severity_keywords":severity_result.get("keywords", []),
+        "auto_called":      auto_called,
+        "emergency_result": emergency_result,
     })
 
 
 @app.route("/api/audio/<filename>")
 def serve_audio(filename):
     return send_from_directory(str(AUDIO_DIR), filename)
+
+
+# ---------------------------------------------------------------------------
+# Emergency calling — Twilio
+# ---------------------------------------------------------------------------
+
+@app.route("/api/emergency/trigger", methods=["POST"])
+def emergency_trigger():
+    """
+    Trigger an emergency call + SMS.
+
+    JSON body (all optional):
+      summary       str   override the auto-generated summary
+      patient_name  str   name to include in the alert (default "the patient")
+      to_number     str   override EMERGENCY_TO_NUMBER for this call only
+    """
+    data         = request.get_json(silent=True) or {}
+    summary      = data.get("summary", "The patient is experiencing a medical emergency and needs immediate assistance.")
+    patient_name = data.get("patient_name", "the patient")
+    to_number    = data.get("to_number") or None  # None → use env default
+
+    result = ec.trigger_emergency(
+        summary=summary,
+        patient_name=patient_name,
+        to_number=to_number,
+    )
+
+    status_code = 200 if result.get("success") else 500
+    return jsonify(result), status_code
+
+
+@app.route("/api/emergency/twiml", methods=["GET", "POST"])
+def emergency_twiml():
+    """
+    TwiML webhook — Twilio fetches this URL when the recipient answers.
+    Summary and patient name are passed as query params by trigger_emergency().
+    """
+    from flask import Response as FlaskResponse
+    summary      = request.args.get("summary", "Please respond immediately to a medical emergency.")
+    patient_name = request.args.get("name", "the patient")
+    xml = ec.build_twiml(summary, patient_name)
+    return FlaskResponse(xml, mimetype="text/xml")
+
+
+@app.route("/api/emergency/status", methods=["POST"])
+def emergency_status_callback():
+    """
+    Twilio POSTs call progress events here (ringing, answered, completed, etc.).
+    Logs them and returns 204.
+    """
+    call_sid    = request.form.get("CallSid", "unknown")
+    call_status = request.form.get("CallStatus", "unknown")
+    call_to     = request.form.get("To", "")
+    logger.info(f"[Twilio] Call {call_sid} → {call_to} : {call_status}")
+    return ("", 204)
+
+
+@app.route("/api/emergency/call-status/<call_sid>", methods=["GET"])
+def emergency_call_status(call_sid: str):
+    """Poll the live status of a specific call SID."""
+    return jsonify(ec.get_call_status(call_sid))
+
+
+@app.route("/api/emergency/config", methods=["GET"])
+def emergency_config():
+    """Return Twilio configuration status (no secret values exposed)."""
+    return jsonify(ec.config_status())
 
 
 @app.route("/", defaults={"path": ""})
@@ -305,10 +455,13 @@ def serve_frontend(path):
 
 
 if __name__ == "__main__":
-    print("\n🩺  MediBot MCP server starting...")
-    print(f"   GROQ_API_KEY      : {'✅ set' if GROQ_API_KEY else '❌ missing'}")
-    print(f"   ELEVENLABS_API_KEY: {'✅ set' if os.environ.get('ELEVENLABS_API_KEY') else '⚠️  not set (gTTS fallback)'}")
+    print("\n🩺  MediBot MCP + Twilio server starting...")
+    print(f"   GROQ_API_KEY       : {'✅ set' if GROQ_API_KEY else '❌ missing'}")
+    print(f"   ELEVENLABS_API_KEY : {'✅ set' if os.environ.get('ELEVENLABS_API_KEY') else '⚠️  not set (gTTS fallback)'}")
+    tw = ec.config_status()
+    print(f"   Twilio ready       : {'✅ yes' if tw['ready'] else '❌ no — ' + str([k for k,v in tw.items() if v == 'MISSING'])}")
+    print(f"   Emergency number   : {tw['EMERGENCY_TO_NUMBER']}")
     summary = mcp.store_summary()
-    print(f"   MCP store         : {summary['total_chunks']} chunks from {len(summary['documents'])} doc(s)")
-    print(f"   MCP tools         : {[t['function']['name'] for t in mcp.MCP_TOOLS]}\n")
+    print(f"   MCP store          : {summary['total_chunks']} chunks from {len(summary['documents'])} doc(s)")
+    print(f"   MCP tools          : {[t['function']['name'] for t in mcp.MCP_TOOLS]}\n")
     app.run(debug=True, port=7860)
