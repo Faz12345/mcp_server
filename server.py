@@ -83,7 +83,8 @@ Respond ONLY with a valid JSON object — no explanation, no markdown, no preamb
 {
   "severity": "critical" | "moderate" | "mild",
   "reason": "one sentence reason",
-  "keywords": ["list", "of", "key", "symptoms"]
+  "keywords": ["list", "of", "key", "symptoms"],
+  "specialist": "dermatologist" | "cardiologist" | "neurologist" | "orthopedic" | "general physician" | "emergency"
 }
 
 Rules:
@@ -94,7 +95,15 @@ Rules:
 - "moderate": serious conditions needing urgent medical attention within hours but not immediately life-threatening.
   Examples: high fever, moderate pain, suspected fracture, persistent vomiting, infected wounds.
 - "mild": non-urgent conditions manageable with home care or a routine doctor visit.
-  Examples: common cold, minor cuts, mild headache, minor rash, low-grade fever."""
+  Examples: common cold, minor cuts, mild headache, minor rash, low-grade fever.
+
+For specialist field, pick the most relevant specialist based on symptoms:
+- Skin rash, lesion, wound, burn, acne, eczema → dermatologist
+- Chest pain, heart palpitations, shortness of breath → cardiologist
+- Headache, seizure, numbness, dizziness → neurologist
+- Bone, joint, muscle pain, fracture → orthopedic
+- Life-threatening emergency → emergency
+- Anything else → general physician"""
 
 
 def classify_severity(user_query: str, doctor_response: str) -> dict:
@@ -358,18 +367,167 @@ def analyze():
         logger.warning(f"TTS failed: {e}")
 
     return jsonify({
-        "speech_text":      speech_text,
-        "doctor_response":  doctor_response,
-        "audio_url":        audio_url,
-        "mcp_tools_used":   [t["tool"] for t in tool_log],
-        "tool_call_count":  len(tool_log),
-        # severity fields ↓
-        "severity":         severity,
-        "severity_reason":  severity_result.get("reason", ""),
-        "severity_keywords":severity_result.get("keywords", []),
-        "auto_called":      auto_called,
-        "emergency_result": emergency_result,
+        "speech_text":       speech_text,
+        "doctor_response":   doctor_response,
+        "audio_url":         audio_url,
+        "mcp_tools_used":    [t["tool"] for t in tool_log],
+        "tool_call_count":   len(tool_log),
+        # severity fields
+        "severity":          severity,
+        "severity_reason":   severity_result.get("reason", ""),
+        "severity_keywords": severity_result.get("keywords", []),
+        "specialist":        severity_result.get("specialist", "general physician"),
+        "auto_called":       auto_called,
+        "emergency_result":  emergency_result,
     })
+
+
+@app.route("/api/nearby-doctors", methods=["POST"])
+def nearby_doctors():
+    """
+    Find nearby specialists using OpenStreetMap Overpass API.
+    100% free — no API key, no billing account required.
+
+    JSON body:
+      lat        float   patient latitude
+      lng        float   patient longitude
+      specialty  str     e.g. "dermatologist"
+      radius     int     search radius in metres (default 5000)
+    """
+    import urllib.request, urllib.parse, math
+
+    data      = request.get_json(silent=True) or {}
+    lat       = data.get("lat")
+    lng       = data.get("lng")
+    specialty = data.get("specialty", "dermatologist")
+    radius    = int(data.get("radius", 5000))
+
+    if lat is None or lng is None:
+        return jsonify({"error": "lat and lng are required"}), 400
+
+    # ── Map specialty → OSM tags ──────────────────────────────────────────────
+    SPECIALTY_TAGS = {
+        "dermatologist":     [('healthcare:speciality', 'dermatology'),
+                              ('amenity', 'doctors'),
+                              ('amenity', 'clinic')],
+        "cardiologist":      [('healthcare:speciality', 'cardiology'),
+                              ('amenity', 'hospital'),
+                              ('amenity', 'clinic')],
+        "neurologist":       [('healthcare:speciality', 'neurology'),
+                              ('amenity', 'hospital'),
+                              ('amenity', 'clinic')],
+        "orthopedic surgeon":[('healthcare:speciality', 'orthopaedics'),
+                              ('amenity', 'hospital'),
+                              ('amenity', 'clinic')],
+        "general physician": [('amenity', 'doctors'),
+                              ('amenity', 'clinic'),
+                              ('healthcare', 'doctor')],
+        "hospital emergency":[('amenity', 'hospital'),
+                              ('emergency', 'yes')],
+    }
+
+    tags = SPECIALTY_TAGS.get(specialty, [('amenity', 'clinic'), ('amenity', 'doctors')])
+
+    # Build Overpass QL query — union of all relevant tags
+    union_parts = []
+    for key, val in tags:
+        union_parts.append(f'node["{key}"="{val}"](around:{radius},{lat},{lng});')
+        union_parts.append(f'way["{key}"="{val}"](around:{radius},{lat},{lng});')
+
+    overpass_query = f"""
+[out:json][timeout:15];
+(
+  {''.join(union_parts)}
+);
+out center tags 20;
+"""
+
+    def haversine(lat1, lng1, lat2, lng2):
+        """Distance in km between two GPS points."""
+        R = 6371
+        dlat = math.radians(lat2 - lat1)
+        dlng = math.radians(lng2 - lng1)
+        a = math.sin(dlat/2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlng/2)**2
+        return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    try:
+        payload = urllib.parse.urlencode({"data": overpass_query}).encode("utf-8")
+        req = urllib.request.Request(
+            "https://overpass-api.de/api/interpreter",
+            data=payload,
+            headers={
+                "User-Agent": "MediBot/2.0 (educational medical assistant; contact@example.com)",
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=15) as r:
+            osm_data = json.loads(r.read().decode("utf-8"))
+
+        elements = osm_data.get("elements", [])
+
+        results = []
+        seen_names = set()
+
+        for el in elements:
+            tags_el  = el.get("tags", {})
+            name     = tags_el.get("name", "").strip()
+            if not name or name in seen_names:
+                continue
+            seen_names.add(name)
+
+            # Coordinates — nodes have lat/lng directly; ways have center
+            if el.get("type") == "node":
+                elat, elng = el.get("lat"), el.get("lon")
+            else:
+                center = el.get("center", {})
+                elat, elng = center.get("lat"), center.get("lon")
+
+            if not elat or not elng:
+                continue
+
+            dist_km   = haversine(lat, lng, elat, elng)
+            address   = ", ".join(filter(None, [
+                tags_el.get("addr:housenumber", ""),
+                tags_el.get("addr:street", ""),
+                tags_el.get("addr:suburb", ""),
+                tags_el.get("addr:city", ""),
+            ])) or tags_el.get("addr:full", "Address not listed")
+
+            phone     = tags_el.get("phone", "") or tags_el.get("contact:phone", "")
+            website   = tags_el.get("website", "") or tags_el.get("contact:website", "")
+            opening   = tags_el.get("opening_hours", "")
+            amenity   = tags_el.get("amenity", tags_el.get("healthcare", ""))
+
+            results.append({
+                "name":           name,
+                "address":        address,
+                "distance_km":    round(dist_km, 2),
+                "phone":          phone,
+                "website":        website,
+                "opening_hours":  opening,
+                "type":           amenity,
+                "lat":            elat,
+                "lng":            elng,
+                "osm_id":         el.get("id"),
+                "directions_url": f"https://www.google.com/maps/dir/{lat},{lng}/{elat},{elng}",
+                "maps_url":       f"https://www.openstreetmap.org/?mlat={elat}&mlon={elng}&zoom=17",
+            })
+
+        # Sort by distance
+        results.sort(key=lambda x: x["distance_km"])
+        results = results[:8]
+
+        return jsonify({
+            "results":   results,
+            "specialty": specialty,
+            "radius_km": radius // 1000,
+            "center":    {"lat": lat, "lng": lng},
+            "source":    "OpenStreetMap (Overpass API) — free, no API key",
+        })
+
+    except Exception as e:
+        logger.error(f"Overpass API error: {e}")
+        return jsonify({"error": f"Map search failed: {str(e)}"}), 500
 
 
 @app.route("/api/audio/<filename>")

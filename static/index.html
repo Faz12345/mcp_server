@@ -1058,6 +1058,185 @@
     display: flex; align-items: center; gap: 5px;
   }
 
+  /* ── Nearby doctors panel ────────────────────────── */
+  .nearby-panel {
+    display: none;
+    flex-direction: column; gap: 0;
+    animation: fadeUp 0.5s ease forwards;
+    margin-top: 16px;
+  }
+  .nearby-panel.visible { display: flex; }
+
+  .nearby-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.2);
+  }
+
+  .nearby-title {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.62rem; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--teal);
+  }
+
+  .nearby-subtitle {
+    font-size: 0.58rem; color: var(--text-dim);
+    letter-spacing: 0.06em;
+  }
+
+  .nearby-controls {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    flex-wrap: wrap;
+  }
+
+  .radius-select {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text-mid);
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    padding: 5px 8px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .specialty-select {
+    background: var(--panel);
+    border: 1px solid var(--border2);
+    border-radius: 5px;
+    color: var(--teal);
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    padding: 5px 8px;
+    outline: none;
+    cursor: pointer;
+    flex: 1;
+  }
+
+  .btn-relocate {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    padding: 5px 10px;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 5px;
+    transition: all 0.2s; white-space: nowrap;
+  }
+  .btn-relocate:hover { border-color: var(--teal); color: var(--teal); }
+
+  .gps-status {
+    font-size: 0.58rem; color: var(--text-dim);
+    padding: 6px 16px;
+    display: flex; align-items: center; gap: 6px;
+    letter-spacing: 0.06em;
+  }
+
+  .gps-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--text-dim); flex-shrink: 0;
+  }
+  .gps-dot.active { background: var(--teal); animation: pulse 2s ease-in-out infinite; }
+  .gps-dot.error  { background: var(--red); }
+
+  .nearby-list {
+    display: flex; flex-direction: column; gap: 0;
+    max-height: 360px; overflow-y: auto;
+  }
+
+  .doctor-card {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+    animation: fadeUp 0.3s ease forwards;
+    cursor: default;
+  }
+  .doctor-card:hover { background: rgba(0,210,180,0.03); }
+  .doctor-card:last-child { border-bottom: none; }
+
+  .doctor-rank {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--teal-dim); border: 1px solid var(--border2);
+    display: grid; place-items: center;
+    font-size: 0.6rem; color: var(--teal);
+    flex-shrink: 0; font-weight: 600;
+  }
+
+  .doctor-info { flex: 1; min-width: 0; }
+
+  .doctor-name {
+    font-size: 0.72rem; color: var(--text);
+    white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; margin-bottom: 2px;
+  }
+
+  .doctor-address {
+    font-size: 0.62rem; color: var(--text-dim);
+    white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; margin-bottom: 5px;
+    letter-spacing: 0.03em;
+  }
+
+  .doctor-meta {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+
+  .doctor-rating {
+    font-size: 0.6rem; color: var(--amber);
+    display: flex; align-items: center; gap: 3px;
+  }
+
+  .open-badge {
+    font-size: 0.55rem; padding: 1px 6px; border-radius: 8px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .open-badge.open   { background: rgba(0,210,180,0.1); border: 1px solid rgba(0,210,180,0.25); color: var(--teal); }
+  .open-badge.closed { background: rgba(255,77,109,0.08); border: 1px solid rgba(255,77,109,0.2); color: var(--red); }
+  .open-badge.unknown { background: var(--bg3); border: 1px solid var(--border); color: var(--text-dim); }
+
+  .doctor-actions {
+    display: flex; flex-direction: column; gap: 5px; flex-shrink: 0;
+  }
+
+  .btn-dir, .btn-maps {
+    font-family: var(--mono); font-size: 0.56rem;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 4px 9px; border-radius: 4px; cursor: pointer;
+    text-decoration: none; display: flex; align-items: center;
+    gap: 4px; transition: all 0.2s; white-space: nowrap;
+  }
+  .btn-dir {
+    background: var(--teal); color: var(--bg);
+    border: 1px solid var(--teal);
+  }
+  .btn-dir:hover { background: #00f0ce; }
+  .btn-maps {
+    background: transparent; color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+  .btn-maps:hover { border-color: var(--teal); color: var(--teal); }
+
+  .nearby-empty {
+    padding: 28px 16px; text-align: center;
+    color: var(--text-dim); font-size: 0.68rem;
+    line-height: 1.7;
+  }
+
+  .nearby-footer {
+    padding: 8px 16px;
+    font-size: 0.55rem; color: var(--text-dim);
+    border-top: 1px solid var(--border);
+    opacity: 0.5; text-align: center; letter-spacing: 0.06em;
+  }
+
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
@@ -1335,7 +1514,64 @@
             <div class="auto-call-meta" id="autoCallMeta"></div>
           </div>
         </div>
-      </div>
+
+        <!-- Nearby doctors panel -->
+        <div class="nearby-panel panel" id="nearbyPanel">
+          <div class="nearby-head">
+            <div class="nearby-title">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+              Nearby Specialists
+            </div>
+            <span class="nearby-subtitle" id="nearbySubtitle">Finding doctors near you…</span>
+          </div>
+
+          <div class="gps-status" id="gpsStatus">
+            <div class="gps-dot" id="gpsDot"></div>
+            <span id="gpsStatusText">Requesting location…</span>
+          </div>
+
+          <div class="nearby-controls" id="nearbyControls" style="display:none">
+            <select class="specialty-select" id="specialtySelect" onchange="refreshNearby()">
+              <option value="dermatologist">Dermatologist</option>
+              <option value="cardiologist">Cardiologist</option>
+              <option value="neurologist">Neurologist</option>
+              <option value="orthopedic surgeon">Orthopedic</option>
+              <option value="general physician">General Physician</option>
+              <option value="hospital emergency">Emergency</option>
+            </select>
+            <select class="radius-select" id="radiusSelect" onchange="refreshNearby()">
+              <option value="2000">2 km</option>
+              <option value="5000" selected>5 km</option>
+              <option value="10000">10 km</option>
+              <option value="20000">20 km</option>
+            </select>
+            <button class="btn-relocate" onclick="relocate()">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <circle cx="12" cy="12" r="3"/>
+                <line x1="12" y1="2" x2="12" y2="5"/>
+                <line x1="12" y1="19" x2="12" y2="22"/>
+                <line x1="2" y1="12" x2="5" y2="12"/>
+                <line x1="19" y1="12" x2="22" y2="12"/>
+              </svg>
+              Relocate
+            </button>
+          </div>
+
+          <div class="nearby-list" id="nearbyList">
+            <div class="nearby-empty">
+              <div style="font-size:1.5rem;margin-bottom:8px;opacity:0.3">📍</div>
+              Waiting for GPS location…
+            </div>
+          </div>
+
+          <div class="nearby-footer">Powered by OpenStreetMap · Overpass API · 100% free · no API key required</div>
+        </div>
+
+      </div><!-- /.response-area -->
 
     </div>
 
@@ -1651,6 +1887,18 @@ async function analyze() {
         if (er.call_sid) startCallPolling(er.call_sid);
       } else if (severity === 'critical' && !emergencyContact) {
         toast('⚠️ Critical condition detected — add an emergency contact number to enable auto-calling', true);
+      }
+
+      // Show nearby doctors panel for critical or moderate severity
+      if (severity === 'critical' || severity === 'moderate') {
+        const specialist = data.specialist || 'dermatologist';
+        showNearbyPanel(specialist);
+        if (severity === 'critical') {
+          toast(`📍 Finding nearby ${specialist}s — GPS requested`, false);
+        }
+      } else {
+        // Hide panel for mild
+        document.getElementById('nearbyPanel').classList.remove('visible');
       }
 
       if (data.audio_url) {
@@ -2120,6 +2368,167 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { e.preventDefault(); closeWebcam(); }
   if (e.key === ' ')      { e.preventDefault(); captureWebcam(); }
 });
+
+/* ── GPS & Nearby Doctors ────────────────────────── */
+let _userLat       = null;
+let _userLng       = null;
+let _gpsWatchId    = null;
+let _currentSpec   = 'dermatologist';
+
+function setGpsStatus(state, text) {
+  const dot  = document.getElementById('gpsDot');
+  const span = document.getElementById('gpsStatusText');
+  dot.className  = 'gps-dot' + (state === 'active' ? ' active' : state === 'error' ? ' error' : '');
+  span.textContent = text;
+}
+
+function showNearbyPanel(specialty = 'dermatologist') {
+  const panel = document.getElementById('nearbyPanel');
+  panel.classList.add('visible');
+  // set specialty dropdown
+  const sel = document.getElementById('specialtySelect');
+  for (let i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].value === specialty) { sel.selectedIndex = i; break; }
+  }
+  _currentSpec = specialty;
+  requestGPS();
+}
+
+function requestGPS() {
+  setGpsStatus('', 'Requesting GPS location…');
+  if (!navigator.geolocation) {
+    setGpsStatus('error', 'Geolocation not supported by this browser.');
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      _userLat = pos.coords.latitude;
+      _userLng = pos.coords.longitude;
+      setGpsStatus('active', `📍 ${_userLat.toFixed(4)}, ${_userLng.toFixed(4)}`);
+      document.getElementById('nearbyControls').style.display = 'flex';
+      fetchNearbyDoctors(_userLat, _userLng, _currentSpec);
+    },
+    err => {
+      const msgs = {
+        1: 'Location permission denied. Please allow access in browser settings.',
+        2: 'Location unavailable. Try again or check GPS.',
+        3: 'Location request timed out.',
+      };
+      setGpsStatus('error', msgs[err.code] || 'Location error.');
+      document.getElementById('nearbyList').innerHTML =
+        `<div class="nearby-empty">
+          <div style="font-size:1.5rem;margin-bottom:8px;opacity:0.3">🚫</div>
+          ${msgs[err.code] || 'Could not get location.'}
+        </div>`;
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+  );
+}
+
+function relocate() {
+  _userLat = null; _userLng = null;
+  requestGPS();
+}
+
+function refreshNearby() {
+  const spec   = document.getElementById('specialtySelect').value;
+  _currentSpec = spec;
+  if (_userLat && _userLng) {
+    fetchNearbyDoctors(_userLat, _userLng, spec);
+  } else {
+    requestGPS();
+  }
+}
+
+async function fetchNearbyDoctors(lat, lng, specialty) {
+  const radius = parseInt(document.getElementById('radiusSelect')?.value || 5000);
+  const sub    = document.getElementById('nearbySubtitle');
+  const list   = document.getElementById('nearbyList');
+
+  sub.textContent = 'Searching…';
+  list.innerHTML  = `<div class="nearby-empty">
+    <div style="font-size:1.5rem;margin-bottom:8px;opacity:0.4">🔍</div>
+    Finding ${specialty}s within ${radius/1000} km…
+  </div>`;
+
+  try {
+    const res  = await fetch('/api/nearby-doctors', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ lat, lng, specialty, radius }),
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      sub.textContent = 'Error';
+      list.innerHTML  = `<div class="nearby-empty">⚠️ ${data.error}</div>`;
+      return;
+    }
+
+    const results = data.results || [];
+    sub.textContent = `${results.length} found · ${data.radius_km} km radius`;
+
+    if (!results.length) {
+      list.innerHTML = `<div class="nearby-empty">
+        <div style="font-size:1.5rem;margin-bottom:8px;opacity:0.3">🏥</div>
+        No ${specialty}s found nearby. Try increasing the radius.
+      </div>`;
+      return;
+    }
+
+    list.innerHTML = results.map((d, i) => {
+      const distBadge = `<span style="font-size:0.58rem;color:var(--teal)">📍 ${d.distance_km} km</span>`;
+      const phoneBadge = d.phone
+        ? `<a href="tel:${d.phone}" style="font-size:0.58rem;color:var(--text-mid);text-decoration:none">📞 ${d.phone}</a>`
+        : '';
+      const hoursBadge = d.opening_hours
+        ? `<span style="font-size:0.56rem;color:var(--text-dim)" title="${escHtml(d.opening_hours)}">🕐 ${d.opening_hours.slice(0,30)}${d.opening_hours.length>30?'…':''}</span>`
+        : '';
+      const typeBadge = d.type
+        ? `<span class="open-badge unknown">${escHtml(d.type)}</span>`
+        : '';
+      const websiteBtn = d.website
+        ? `<a class="btn-maps" href="${escHtml(d.website)}" target="_blank" rel="noopener">
+             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+             Website
+           </a>`
+        : `<a class="btn-maps" href="${escHtml(d.maps_url)}" target="_blank" rel="noopener">
+             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+             OSM
+           </a>`;
+
+      return `
+        <div class="doctor-card">
+          <div class="doctor-rank">${i + 1}</div>
+          <div class="doctor-info">
+            <div class="doctor-name" title="${escHtml(d.name)}">${escHtml(d.name)}</div>
+            <div class="doctor-address" title="${escHtml(d.address)}">
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:3px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              ${escHtml(d.address)}
+            </div>
+            <div class="doctor-meta">
+              ${distBadge}
+              ${typeBadge}
+              ${phoneBadge}
+            </div>
+            ${hoursBadge ? `<div style="margin-top:3px">${hoursBadge}</div>` : ''}
+          </div>
+          <div class="doctor-actions">
+            <a class="btn-dir" href="${escHtml(d.directions_url)}" target="_blank" rel="noopener">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+              Directions
+            </a>
+            ${websiteBtn}
+          </div>
+        </div>`;
+    }).join('');
+
+  } catch (err) {
+    sub.textContent = 'Error';
+    list.innerHTML  = `<div class="nearby-empty">Network error — is the server running?</div>`;
+  }
+}
 
 /* ── Keyboard shortcut ───────────────────────────── */
 document.addEventListener('keydown', (e) => {
